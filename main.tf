@@ -34,6 +34,14 @@ resource "yandex_vpc_subnet" "default-ru-central1-a" {
   v4_cidr_blocks = ["10.128.0.0/24"]
 }
 
+resource "yandex_vpc_address" "wg-ru-1-public-adress" {
+  name = "wg public ip adress"
+
+  external_ipv4_address {
+    zone_id = "ru-central1-a"
+  }
+}
+
 resource "yandex_compute_instance" "wg-ru-1" {
   ## https://cloud.yandex.ru/docs/compute/concepts/vm-platforms
   platform_id = "standard-v2"  # Intel Cascade Lake
@@ -51,6 +59,12 @@ resource "yandex_compute_instance" "wg-ru-1" {
 
   network_interface {
     subnet_id = "${yandex_vpc_subnet.default-ru-central1-a.id}"
+    nat = true
+    nat_ip_address = "${yandex_vpc_address.wg-ru-1-public-adress.external_ipv4_address[0].address}"
+  }
+
+   metadata = {
+    ssh-keys = "ubuntu:${file("id_ecdsa.pub")}"
   }
 
 }
